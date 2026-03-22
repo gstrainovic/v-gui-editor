@@ -171,7 +171,7 @@ fn editor_view(window &gui.Window) gui.View {
 				scrollbar_cfg_y: &gui.ScrollbarCfg{overflow: .hidden}
 				width:           gutter_width
 				sizing:          gui.fixed_fill
-				padding:         gui.Padding{10, 8, 4, 8}
+				padding:         gui.Padding{12, 8, 4, 8}
 				color:           gui.Color{30, 32, 38, 255}
 				h_align:         .right
 				clip:            true
