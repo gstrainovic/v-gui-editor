@@ -149,7 +149,7 @@ fn editor_view(window &gui.Window) gui.View {
 			clipped_y := if hl_y < top { top } else { hl_y }
 			clipped_h := if hl_y + actual_lh > bottom { bottom - clipped_y } else { actual_lh }
 
-			// Append highlight rect as last child → drawn on top of gutter/editor
+			// Prepend highlight rect as first child → drawn behind gutter/editor
 			highlight := gui.Layout{
 				shape: &gui.Shape{
 					shape_type: .rectangle
@@ -157,11 +157,11 @@ fn editor_view(window &gui.Window) gui.View {
 					y:          clipped_y
 					width:      layout.shape.width
 					height:     clipped_h
-					color:      gui.Color{70, 80, 150, 200}
+					color:      gui.Color{70, 80, 150, 60}
 				}
 			}
 			mut new_children := layout.children.clone()
-			new_children << highlight
+			new_children.insert(0, highlight)
 			layout.children = new_children
 		}
 		content: [
