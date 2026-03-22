@@ -45,15 +45,16 @@ fn editor_view(window &gui.Window) gui.View {
 	gutter_width := f32(max_digits * 14 + 24)
 
 	return gui.column(
-		width:  w
-		height: h
-		sizing: gui.fixed_fixed
+		width:   w
+		height:  h
+		sizing:  gui.fixed_fixed
+		spacing: 0
+		padding: gui.padding_none
 		content: [
 			// Editor area (gutter + input with highlight)
 			gui.row(
 				width:   w
-				height:  h - 35 // leave space for statusbar
-				sizing:  gui.fixed_fixed
+				sizing:  gui.fixed_fill
 				padding: gui.padding_none
 				spacing: 0
 				// Inject full-row current-line highlight rectangle behind gutter + editor
