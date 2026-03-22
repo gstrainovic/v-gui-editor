@@ -12,10 +12,8 @@ const editor_font = 'JetBrains Mono'
 @[heap]
 struct EditorApp {
 mut:
-	text            string
-	cursor_line     int = 1
-	last_line_count int = 1
-	scroll_pct      f32 // cached scroll position (0.0 = top, 1.0 = bottom)
+	text       string
+	scroll_pct f32 // cached scroll position (0.0 = top, 1.0 = bottom)
 }
 
 fn sample_code() string {
@@ -76,10 +74,7 @@ fn (c Config) validate() ! {
 fn main() {
 	mut window := gui.window(
 		title:        'Code Editor Prototype'
-		state:        &EditorApp{
-			text:            sample_code()
-			last_line_count: sample_code().count('\n') + 1
-		}
+		state:        &EditorApp{text: sample_code()}
 		width:        800
 		height:       600
 		cursor_blink: true
@@ -97,8 +92,13 @@ fn editor_view(window &gui.Window) gui.View {
 	app := window.state[EditorApp]()
 
 	line_count  := app.text.count('\n') + 1
-	cursor_line := app.cursor_line
 	scroll_pct  := app.scroll_pct
+
+	// Cursor line from actual input cursor position
+	cpos := gui.input_cursor_pos(editor_id_focus, window)
+	runes := app.text.runes()
+	safe_pos := if cpos < runes.len { cpos } else { runes.len }
+	cursor_line := runes[..safe_pos].string().count('\n') + 1
 
 	// Gutter text: right-aligned line numbers
 	max_digits := '${line_count}'.len
@@ -220,33 +220,9 @@ fn editor_view(window &gui.Window) gui.View {
 					...gui.theme().b1
 					family: editor_font
 				}
-				on_key_down:     fn (_ &gui.Layout, mut e gui.Event, mut win gui.Window) {
-					mut a := win.state[EditorApp]()
-					lc := a.text.count('\n') + 1
-					match e.key_code {
-						.up       { if a.cursor_line > 1  { a.cursor_line-- } }
-						.down     { if a.cursor_line < lc { a.cursor_line++ } }
-						.home     {
-							// Ctrl+Home → first line
-							if e.modifiers.has_any(.ctrl) { a.cursor_line = 1 }
-						}
-						.end      {
-							// Ctrl+End → last line
-							if e.modifiers.has_any(.ctrl) { a.cursor_line = lc }
-						}
-						else      {}
-					}
-				}
 				on_text_changed: fn (_ &gui.Layout, s string, mut win gui.Window) {
 					mut a := win.state[EditorApp]()
-					new_lc := s.count('\n') + 1
-					delta  := new_lc - a.last_line_count
-					if delta != 0 {
-						new_pos := a.cursor_line + delta
-						a.cursor_line = if new_pos < 1 { 1 } else if new_pos > new_lc { new_lc } else { new_pos }
-					}
-					a.text            = s
-					a.last_line_count = new_lc
+					a.text = s
 				}
 			),
 		]
