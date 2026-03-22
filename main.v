@@ -107,7 +107,28 @@ fn editor_view(window &gui.Window) gui.View {
 		s := '${i}'
 		line_nums << ' '.repeat(max_digits - s.len) + s
 	}
-	gutter_text := line_nums.join('\n')
+
+	// Build rich text gutter with current line in white
+	mut gutter_runs := []gui.RichTextRun{}
+	for i, line_num in line_nums {
+		is_current := i + 1 == cursor_line
+		color := if is_current { gui.Color{255, 255, 255, 255} } else { gui.Color{100, 110, 130, 255} }
+		gutter_runs << gui.RichTextRun{
+			text: line_num
+			style: gui.TextStyle{
+				...gui.theme().b1
+				family: editor_font
+				color:  color
+			}
+		}
+		if i < line_nums.len - 1 {
+			gutter_runs << gui.RichTextRun{
+				text:  '\n'
+				style: gui.TextStyle{...gui.theme().b1}
+			}
+		}
+	}
+	gutter_rt := gui.RichText{runs: gutter_runs}
 
 	// 14px per digit + 24px padding — wide enough for up to 4-digit line numbers
 	gutter_width := f32(max_digits * 14 + 24)
@@ -180,13 +201,8 @@ fn editor_view(window &gui.Window) gui.View {
 					a.scroll_pct = win.scroll_vertical_pct(editor_id_scroll)
 				}
 				content:         [
-					gui.text(
-						text:       gutter_text
-						text_style: gui.TextStyle{
-							...gui.theme().b1
-							family: editor_font
-							color:  gui.Color{100, 110, 130, 255}
-						}
+					gui.rtf(
+						rich_text: gutter_rt
 					),
 				]
 			),
