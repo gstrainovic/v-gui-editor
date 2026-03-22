@@ -6,15 +6,14 @@ import gui
 
 const editor_id_focus  = u32(1)
 const editor_id_scroll = u32(1)
-const line_height      = f32(20) // approximation matching default font line height
 
 @[heap]
 struct EditorApp {
 mut:
-	text          string
-	cursor_line   int = 1
-	last_text_len int
-	scroll_pct    f32 // cached scroll position (0.0 = top, 1.0 = bottom)
+	text            string
+	cursor_line     int = 1
+	last_line_count int = 1
+	scroll_pct      f32 // cached scroll position (0.0 = top, 1.0 = bottom)
 }
 
 fn sample_code() string {
@@ -75,7 +74,10 @@ fn (c Config) validate() ! {
 fn main() {
 	mut window := gui.window(
 		title:        'Code Editor Prototype'
-		state:        &EditorApp{text: sample_code()}
+		state:        &EditorApp{
+			text:            sample_code()
+			last_line_count: sample_code().count('\n') + 1
+		}
 		width:        800
 		height:       600
 		cursor_blink: true
@@ -116,26 +118,34 @@ fn editor_view(window &gui.Window) gui.View {
 		spacing: 0
 		// Inject full-row current-line highlight rectangle behind gutter + editor
 		amend_layout: fn [cursor_line, line_count, scroll_pct] (mut layout gui.Layout, mut _ gui.Window) {
-			// Total scrollable content height (lines + top/bottom padding of 4px each)
-			total_h   := f32(line_count) * line_height + 8
-			visible_h := layout.shape.height
-			max_scroll := if total_h > visible_h { total_h - visible_h } else { f32(0) }
-			scroll_offset := scroll_pct * max_scroll
+			// Read actual line height from the gutter text child layout.
+			// layout.children[0] = gutter column, .children[0] = text widget.
+			// text.shape.height = total rendered height of all line-number lines.
+			if layout.children.len < 1 || layout.children[0].children.len < 1 {
+				return
+			}
+			gutter_text_h := layout.children[0].children[0].shape.height
+			actual_lh     := if line_count > 0 { gutter_text_h / f32(line_count) } else { f32(20) }
 
-			// Absolute Y of the highlighted line
-			hl_y := layout.shape.y + f32(cursor_line - 1) * line_height + 4 - scroll_offset
+			// Total scrollable content height (text + top/bottom gutter padding 4+4)
+			total_h        := gutter_text_h + 8
+			visible_h      := layout.shape.height
+			max_scroll     := if total_h > visible_h { total_h - visible_h } else { f32(0) }
+			scroll_offset  := scroll_pct * max_scroll
+
+			// Absolute Y of the highlighted line (4px = gutter top padding)
+			hl_y := layout.shape.y + f32(cursor_line - 1) * actual_lh + 4 - scroll_offset
 
 			// Clamp to visible area
 			top    := layout.shape.y
 			bottom := layout.shape.y + visible_h
-			if hl_y + line_height <= top || hl_y >= bottom {
+			if hl_y + actual_lh <= top || hl_y >= bottom {
 				return
 			}
 			clipped_y := if hl_y < top { top } else { hl_y }
-			clipped_h := if hl_y + line_height > bottom { bottom - clipped_y } else { line_height }
+			clipped_h := if hl_y + actual_lh > bottom { bottom - clipped_y } else { actual_lh }
 
 			// Append highlight rect as last child → drawn on top of gutter/editor
-			// with transparency so text remains readable
 			highlight := gui.Layout{
 				shape: &gui.Shape{
 					shape_type: .rectangle
@@ -161,7 +171,6 @@ fn editor_view(window &gui.Window) gui.View {
 				color:           gui.Color{30, 32, 38, 255}
 				h_align:         .right
 				clip:            true
-				// Cache scroll position when user scrolls — safe to call scroll_vertical_pct here
 				on_scroll:       fn (_ &gui.Layout, mut win gui.Window) {
 					mut a := win.state[EditorApp]()
 					a.scroll_pct = win.scroll_vertical_pct(editor_id_scroll)
@@ -187,22 +196,32 @@ fn editor_view(window &gui.Window) gui.View {
 				color:           gui.Color{36, 39, 46, 255}
 				scrollbar_cfg_y: &gui.ScrollbarCfg{overflow: .auto}
 				on_key_down:     fn (_ &gui.Layout, mut e gui.Event, mut win gui.Window) {
-					// Track cursor line on arrow key navigation
 					mut a := win.state[EditorApp]()
+					lc := a.text.count('\n') + 1
 					match e.key_code {
-						.up    { if a.cursor_line > 1 { a.cursor_line-- } }
-						.down  { if a.cursor_line < a.text.count('\n') + 1 { a.cursor_line++ } }
-						.enter { a.cursor_line = a.text.count('\n') + 1 }
-						else   {}
+						.up       { if a.cursor_line > 1  { a.cursor_line-- } }
+						.down     { if a.cursor_line < lc { a.cursor_line++ } }
+						.home     {
+							// Ctrl+Home → first line
+							if e.modifiers.has_any(.ctrl) { a.cursor_line = 1 }
+						}
+						.end      {
+							// Ctrl+End → last line
+							if e.modifiers.has_any(.ctrl) { a.cursor_line = lc }
+						}
+						else      {}
 					}
 				}
 				on_text_changed: fn (_ &gui.Layout, s string, mut win gui.Window) {
 					mut a := win.state[EditorApp]()
-					a.text = s
-					if s.len > a.last_text_len && s.contains('\n') {
-						a.cursor_line = s.count('\n') + 1
+					new_lc := s.count('\n') + 1
+					delta  := new_lc - a.last_line_count
+					if delta != 0 {
+						new_pos := a.cursor_line + delta
+						a.cursor_line = if new_pos < 1 { 1 } else if new_pos > new_lc { new_lc } else { new_pos }
 					}
-					a.last_text_len = s.len
+					a.text            = s
+					a.last_line_count = new_lc
 				}
 			),
 		]
