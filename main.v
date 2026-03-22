@@ -7,6 +7,8 @@ import gui
 const editor_id_focus  = u32(1)
 const editor_id_scroll = u32(1)
 
+const editor_font = 'JetBrains Mono'
+
 @[heap]
 struct EditorApp {
 mut:
@@ -169,7 +171,7 @@ fn editor_view(window &gui.Window) gui.View {
 				scrollbar_cfg_y: &gui.ScrollbarCfg{overflow: .hidden}
 				width:           gutter_width
 				sizing:          gui.fixed_fill
-				padding:         gui.Padding{4, 8, 4, 8}
+				padding:         gui.Padding{10, 8, 4, 8}
 				color:           gui.Color{30, 32, 38, 255}
 				h_align:         .right
 				clip:            true
@@ -182,7 +184,8 @@ fn editor_view(window &gui.Window) gui.View {
 						text:       gutter_text
 						text_style: gui.TextStyle{
 							...gui.theme().b3
-							color: gui.Color{100, 110, 130, 255}
+							family: editor_font
+							color:  gui.Color{100, 110, 130, 255}
 						}
 					),
 				]
@@ -197,6 +200,10 @@ fn editor_view(window &gui.Window) gui.View {
 				sizing:          gui.fill_fill
 				color:           gui.Color{36, 39, 46, 255}
 				scrollbar_cfg_y: &gui.ScrollbarCfg{overflow: .auto}
+				text_style:      gui.TextStyle{
+					...gui.theme().b1
+					family: editor_font
+				}
 				on_key_down:     fn (_ &gui.Layout, mut e gui.Event, mut win gui.Window) {
 					mut a := win.state[EditorApp]()
 					lc := a.text.count('\n') + 1
