@@ -124,8 +124,10 @@ fn editor_view(window &gui.Window) gui.View {
 			if layout.children.len < 1 || layout.children[0].children.len < 1 {
 				return
 			}
-			gutter_text_h := layout.children[0].children[0].shape.height
-			actual_lh     := if line_count > 0 { gutter_text_h / f32(line_count) } else { f32(20) }
+			gutter_text_shape := layout.children[0].children[0].shape
+			gutter_text_h     := gutter_text_shape.height
+			gutter_text_y     := gutter_text_shape.y
+			actual_lh         := if line_count > 0 { gutter_text_h / f32(line_count) } else { f32(20) }
 
 			// Total scrollable content height (text + top/bottom gutter padding 4+4)
 			total_h        := gutter_text_h + 8
@@ -133,8 +135,8 @@ fn editor_view(window &gui.Window) gui.View {
 			max_scroll     := if total_h > visible_h { total_h - visible_h } else { f32(0) }
 			scroll_offset  := scroll_pct * max_scroll
 
-			// Absolute Y of the highlighted line (4px = gutter top padding)
-			hl_y := layout.shape.y + f32(cursor_line - 1) * actual_lh + 4 - scroll_offset
+			// Absolute Y of the highlighted line — starts from gutter text baseline
+			hl_y := gutter_text_y + f32(cursor_line - 1) * actual_lh - scroll_offset
 
 			// Clamp to visible area
 			top    := layout.shape.y
