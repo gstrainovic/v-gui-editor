@@ -1,9 +1,10 @@
 import os
 
-const editor_id_focus  = u32(1)
-const editor_id_scroll = u32(1)
+const editor_id_focus    = u32(1)
+const editor_id_scroll   = u32(1)
+const gutter_id_scroll   = u32(3)
 const explorer_id_scroll = u32(2)
-const editor_font      = 'JetBrains Mono'
+const editor_font        = 'JetBrains Mono'
 
 struct TabInfo {
 mut:

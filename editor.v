@@ -12,30 +12,23 @@ fn editor_view(mut window gui.Window) gui.View {
 		spacing: 0
 		padding: gui.padding_none
 		content: [
-			gui.row(
-				sizing:  gui.fill_fill
-				padding: gui.padding_none
-				spacing: 0
-				content: [
-					gui.splitter(
-						id:          'main_split'
-						orientation: .horizontal
-						ratio:       splitter_ratio
-						sizing:      gui.fill_fill
-						on_change:   fn (ratio f32, _ gui.SplitterCollapsed, mut _ gui.Event, mut w gui.Window) {
-							mut a := w.state[EditorApp]()
-							a.splitter_ratio = ratio
-						}
-						first:       gui.SplitterPaneCfg{
-							min_size: 120
-							content:  [explorer_view(mut window)]
-						}
-						second:      gui.SplitterPaneCfg{
-							min_size: 200
-							content:  [editor_panel_view(window)]
-						}
-					),
-				]
+			gui.splitter(
+				id:          'main_split'
+				orientation: .horizontal
+				ratio:       splitter_ratio
+				sizing:      gui.fill_fill
+				on_change:   fn (ratio f32, _ gui.SplitterCollapsed, mut _ gui.Event, mut w gui.Window) {
+					mut a := w.state[EditorApp]()
+					a.splitter_ratio = ratio
+				}
+				first:       gui.SplitterPaneCfg{
+					min_size: 120
+					content:  [explorer_view(mut window)]
+				}
+				second:      gui.SplitterPaneCfg{
+					min_size: 200
+					content:  [editor_panel_view(window)]
+				}
 			),
 			statusbar_view(window),
 		]
@@ -141,7 +134,7 @@ fn editor_panel_view(window &gui.Window) gui.View {
 				content: [
 					// Gutter with line numbers
 					gui.column(
-						id_scroll:       editor_id_scroll
+						id_scroll:       gutter_id_scroll
 						scrollbar_cfg_y: &gui.ScrollbarCfg{overflow: .hidden}
 						width:           gutter_width
 						sizing:          gui.fixed_fill
@@ -149,10 +142,6 @@ fn editor_panel_view(window &gui.Window) gui.View {
 						color:           gui.Color{30, 32, 38, 255}
 						h_align:         .right
 						clip:            true
-						on_scroll:       fn (_ &gui.Layout, mut win gui.Window) {
-							mut a := win.state[EditorApp]()
-							a.scroll_pct = win.scroll_vertical_pct(editor_id_scroll)
-						}
 						content:         [
 							gui.rtf(
 								rich_text: gutter_rt
@@ -168,7 +157,7 @@ fn editor_panel_view(window &gui.Window) gui.View {
 						mode:            .multiline
 						sizing:          gui.fill_fill
 						color:           gui.Color{36, 39, 46, 255}
-						scrollbar_cfg_y: &gui.ScrollbarCfg{overflow: .auto}
+						scrollbar_cfg_y: &gui.ScrollbarCfg{overflow: .visible}
 						text_style:      gui.TextStyle{
 							...gui.theme().b1
 							family: editor_font
