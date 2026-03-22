@@ -1,67 +1,67 @@
+import os
+
 const editor_id_focus  = u32(1)
 const editor_id_scroll = u32(1)
+const explorer_id_scroll = u32(2)
 const editor_font      = 'JetBrains Mono'
+
+struct TabInfo {
+mut:
+	path string
+	name string
+	text string
+}
 
 @[heap]
 struct EditorApp {
 mut:
-	text       string
-	scroll_pct f32 // cached scroll position (0.0 = top, 1.0 = bottom)
+	tabs           []TabInfo
+	active_tab     int       // index into tabs
+	splitter_ratio f32 = 0.22
+	scroll_pct     f32
+	font_size_mult f32 = 1.0
+	root_path      string
 }
 
-fn sample_code() string {
-	return 'module main
-
-import os
-import strings
-
-// A simple program to demonstrate
-// the code editor prototype.
-
-fn main() {
-	args := os.args[1..]
-	if args.len == 0 {
-		eprintln("Usage: program <file>")
-		exit(1)
+fn (app &EditorApp) active_text() string {
+	if app.tabs.len == 0 {
+		return ''
 	}
-
-	filename := args[0]
-	content := os.read_file(filename) or {
-		eprintln("Error: cannot read file")
-		exit(1)
-	}
-
-	lines := content.split_into_lines()
-	for i, line in lines {
-		println("line | text")
-		_ = i
-		_ = line
-	}
-
-	println("Done")
+	return app.tabs[app.active_tab].text
 }
 
-fn helper(s string) string {
-	if s.len == 0 {
-		return "<empty>"
+fn (app &EditorApp) active_name() string {
+	if app.tabs.len == 0 {
+		return 'untitled'
 	}
-	return s.trim_space()
+	return app.tabs[app.active_tab].name
 }
 
-struct Config {
-	filename string
-	verbose  bool
-	output   string
-}
-
-fn (c Config) validate() ! {
-	if c.filename.len == 0 {
-		return error("filename required")
+fn (mut app EditorApp) open_file(path string) {
+	// Check if already open
+	for i, tab in app.tabs {
+		if tab.path == path {
+			app.active_tab = i
+			return
+		}
 	}
+	// Read and open new tab
+	content := os.read_file(path) or { '// Could not read file' }
+	name := os.base(path)
+	app.tabs << TabInfo{path: path, name: name, text: content}
+	app.active_tab = app.tabs.len - 1
 }
 
-// End of file
-'
+fn (mut app EditorApp) close_tab(idx int) {
+	if idx < 0 || idx >= app.tabs.len {
+		return
+	}
+	app.tabs.delete(idx)
+	if app.tabs.len == 0 {
+		app.active_tab = 0
+	} else if app.active_tab >= app.tabs.len {
+		app.active_tab = app.tabs.len - 1
+	}
 }
 
 // Get cursor line from actual input cursor position
@@ -76,7 +76,6 @@ fn get_cursor_col(text string, cpos int) int {
 	if cpos < 0 || cpos > text.len {
 		return 0
 	}
-	// Find start of current line
 	line_start := text[..cpos].last_index('\n') or { -1 } + 1
 	return cpos - line_start
 }

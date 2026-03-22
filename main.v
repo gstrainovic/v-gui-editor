@@ -1,11 +1,13 @@
 import gui
+import os
 
 fn main() {
+	root := os.getwd()
 	mut window := gui.window(
-		title:        'Code Editor Prototype'
-		state:        &EditorApp{text: sample_code()}
-		width:        800
-		height:       600
+		title:        'Code Editor'
+		state:        &EditorApp{root_path: root}
+		width:        1024
+		height:       700
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
 			w.update_view(editor_view)
