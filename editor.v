@@ -89,7 +89,7 @@ fn editor_view(window &gui.Window) gui.View {
 							y:          clipped_y
 							width:      layout.shape.width
 							height:     clipped_h
-							color:      gui.Color{70, 80, 150, 60}
+							color:      gui.Color{70, 80, 150, 40}
 						}
 					}
 					mut new_children := layout.children.clone()
