@@ -8,23 +8,29 @@ fn statusbar_view(window &gui.Window) gui.View {
 	line := get_cursor_line(app.text, cpos)
 	col := get_cursor_col(app.text, cpos)
 
-	// Line and column display
-	status_text := 'Line ${line}, Column ${col}'
+	// Build rich text status display
+	status_rt := gui.RichText{
+		runs: [
+			gui.RichTextRun{
+				text: 'Line ${line}, Column ${col}'
+				style: gui.TextStyle{
+					...gui.theme().b2
+					family: editor_font
+					color:  gui.Color{200, 210, 230, 255}
+				}
+			},
+		]
+	}
 
 	return gui.row(
-		height:  30
+		height:  35
 		sizing:  gui.fixed_fit
 		padding: gui.Padding{0, 12, 0, 12}
-		color:   gui.Color{30, 32, 38, 255}
+		color:   gui.Color{40, 42, 50, 255}
 		v_align: .middle
+		spacing: 16
 		content: [
-			gui.text(
-				text: status_text
-				text_style: gui.TextStyle{
-					...gui.theme().b3
-					color: gui.Color{150, 160, 180, 255}
-				}
-			),
+			gui.rtf(rich_text: status_rt),
 		]
 	)
 }

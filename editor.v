@@ -52,7 +52,7 @@ fn editor_view(window &gui.Window) gui.View {
 			// Editor area (gutter + input with highlight)
 			gui.row(
 				width:   w
-				height:  h - 30 // leave space for statusbar
+				height:  h - 35 // leave space for statusbar
 				sizing:  gui.fixed_fixed
 				padding: gui.padding_none
 				spacing: 0
