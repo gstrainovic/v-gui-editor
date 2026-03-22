@@ -157,11 +157,11 @@ fn editor_view(window &gui.Window) gui.View {
 					y:          clipped_y
 					width:      layout.shape.width
 					height:     clipped_h
-					color:      gui.Color{70, 80, 150, 120}
+					color:      gui.Color{70, 80, 150, 60}
 				}
 			}
 			mut new_children := layout.children.clone()
-			new_children.insert(0, highlight)
+			new_children << highlight
 			layout.children = new_children
 		}
 		content: [
