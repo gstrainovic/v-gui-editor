@@ -183,7 +183,7 @@ fn editor_view(window &gui.Window) gui.View {
 					gui.text(
 						text:       gutter_text
 						text_style: gui.TextStyle{
-							...gui.theme().b3
+							...gui.theme().b1
 							family: editor_font
 							color:  gui.Color{100, 110, 130, 255}
 						}
