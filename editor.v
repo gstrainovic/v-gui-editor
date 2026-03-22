@@ -134,7 +134,7 @@ fn editor_panel_view(window &gui.Window) gui.View {
 				content: [
 					// Gutter with line numbers
 					gui.column(
-						id_scroll:       gutter_id_scroll
+						id_scroll:       editor_id_scroll
 						scrollbar_cfg_y: &gui.ScrollbarCfg{overflow: .hidden}
 						width:           gutter_width
 						sizing:          gui.fixed_fill
@@ -142,6 +142,10 @@ fn editor_panel_view(window &gui.Window) gui.View {
 						color:           gui.Color{30, 32, 38, 255}
 						h_align:         .right
 						clip:            true
+						on_scroll:       fn (_ &gui.Layout, mut win gui.Window) {
+							mut a := win.state[EditorApp]()
+							a.scroll_pct = win.scroll_vertical_pct(editor_id_scroll)
+						}
 						content:         [
 							gui.rtf(
 								rich_text: gutter_rt
